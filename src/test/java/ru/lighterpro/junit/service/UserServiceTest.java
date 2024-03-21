@@ -2,12 +2,17 @@ package ru.lighterpro.junit.service;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvFileSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import ru.lighterpro.junit.dto.User;
 import ru.lighterpro.junit.extension.UserServiceParamResolver;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -18,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("fast")
 @Tag("user")
-//@TestMethodOrder(MethodOrderer.MethodName.class)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @ExtendWith(
         UserServiceParamResolver.class
@@ -30,17 +34,12 @@ public class UserServiceTest {
 
     private UserService userService;
 
-    public UserServiceTest(TestInfo testInfo) {
-        System.out.println();
-    }
-
     @BeforeAll
     static void beforeAll() {
     }
 
     @BeforeEach
     void setUp(UserService userService) {
-        System.out.println("Before each");
         this.userService = userService;
     }
 
@@ -80,7 +79,7 @@ public class UserServiceTest {
     @DisplayName("User login test")
     class LoginTests {
         @Test
-        @DisplayName("")
+        @DisplayName("Throw an exception if username or password is null")
         void throwExceptionIfUsernameOrPasswordIsNull() {
             assertAll(
                     () -> assertThrows(IllegalArgumentException.class,
@@ -114,6 +113,31 @@ public class UserServiceTest {
             Optional<User> maybeUser = userService.login("WrongUsername", IVAN.getPassword());
             assertThat(maybeUser).isEmpty();
         }
+
+        @ParameterizedTest(name = "{arguments} test")
+        @MethodSource("ru.lighterpro.junit.service.UserServiceTest#getArgumentsForLoginTest")
+        void loginParametrizedTestWithMethodSource(String username, String password, Optional<User> user) {
+            userService.add(IVAN, OLGA);
+            Optional<User> maybeUser = userService.login(username, password);
+            assertThat(maybeUser).isEqualTo(user);
+        }
+
+        @ParameterizedTest
+        @CsvFileSource(resources = "/login-test-data.csv", delimiter = ';', numLinesToSkip = 1)
+        void loginParametrizedTestWithCSVFile(String username, String password) {
+            userService.add(IVAN, OLGA);
+            Optional<User> maybeUser = userService.login(username, password);
+            assertThat(maybeUser).isNotEmpty();
+        }
+    }
+
+    static Stream<Arguments> getArgumentsForLoginTest() {
+        return Stream.of(
+                Arguments.of("Ivan", "123", Optional.of(IVAN)),
+                Arguments.of("Olga", "456", Optional.of(OLGA)),
+                Arguments.of("Ivan", "dummy", Optional.empty()),
+                Arguments.of("dummy", "123", Optional.empty())
+        );
     }
 
     // 🟥 Tests block end 🟥 //
