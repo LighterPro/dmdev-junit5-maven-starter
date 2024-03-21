@@ -16,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag("fast")
 @Tag("user")
+//@TestMethodOrder(MethodOrderer.MethodName.class)
+@TestMethodOrder(MethodOrderer.DisplayName.class)
 public class UserServiceTest {
 
     private static final User IVAN = User.of(1, "Ivan", "123");
@@ -35,6 +37,7 @@ public class UserServiceTest {
     // 🟩 Tests block start 🟩 //
 
     @Test
+    @DisplayName("The user list should be empty if no users have been added")
     void usersListEmptyIfNoUsersAdded() {
         List<User> users = userService.getAll();
         assertThat(users).as("Users list should be empty")
@@ -51,32 +54,6 @@ public class UserServiceTest {
     }
 
     @Test
-    @Tag("login")
-    void loginSuccessIfUserExists() {
-        userService.add(IVAN);
-        Optional<User> maybeUser = userService.login(IVAN.getUsername(), IVAN.getPassword());
-
-        assertThat(maybeUser).isPresent();
-        maybeUser.ifPresent(user -> assertThat(user).isEqualTo(IVAN));
-    }
-
-    @Test
-    @Tag("login")
-    void loginFailIfUsernameDoesNotExist() {
-        userService.add(IVAN);
-        Optional<User> maybeUser = userService.login("WrongUsername", IVAN.getPassword());
-        assertThat(maybeUser).isEmpty();
-    }
-
-    @Test
-    @Tag("login")
-    void loginFailIfPasswordIncorrect() {
-        userService.add(IVAN);
-        Optional<User> maybeUser = userService.login(IVAN.getUsername(), "WrongPassword");
-        assertThat(maybeUser).isEmpty();
-    }
-
-    @Test
     void usersListConvertedToMapById() {
         userService.add(IVAN, OLGA);
 
@@ -88,17 +65,45 @@ public class UserServiceTest {
         );
     }
 
-    @Test
+    @Nested
     @Tag("login")
-    void throwExceptionIfUsernameOrPasswordIsNull() {
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class,
-                        () -> userService.login(null, "dummy"),
-                        "login() should throw exception on null username"),
-                () -> assertThrows(IllegalArgumentException.class,
-                        () -> userService.login("dummy", null),
-                        "login() should throw exception on null password")
-        );
+    @DisplayName("User login test")
+    class LoginTests {
+        @Test
+        @DisplayName("")
+        void throwExceptionIfUsernameOrPasswordIsNull() {
+            assertAll(
+                    () -> assertThrows(IllegalArgumentException.class,
+                            () -> userService.login(null, "dummy"),
+                            "login() should throw exception on null username"),
+                    () -> assertThrows(IllegalArgumentException.class,
+                            () -> userService.login("dummy", null),
+                            "login() should throw exception on null password")
+            );
+        }
+
+        @Test
+        void loginFailIfPasswordIncorrect() {
+            userService.add(IVAN);
+            Optional<User> maybeUser = userService.login(IVAN.getUsername(), "WrongPassword");
+            assertThat(maybeUser).isEmpty();
+        }
+
+        @Test
+        void loginSuccessIfUserExists() {
+            userService.add(IVAN);
+            Optional<User> maybeUser = userService.login(IVAN.getUsername(), IVAN.getPassword());
+
+            assertThat(maybeUser).isPresent();
+            maybeUser.ifPresent(user -> assertThat(user).isEqualTo(IVAN));
+        }
+
+        @Test
+        void loginFailIfUsernameDoesNotExist() {
+            userService.add(IVAN);
+            Optional<User> maybeUser = userService.login("WrongUsername", IVAN.getPassword());
+            assertThat(maybeUser).isEmpty();
+        }
     }
 
     // 🟥 Tests block end 🟥 //
