@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 // Для примера можно сделать один на КЛАСС
 // @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -78,6 +79,18 @@ public class UserServiceTest {
         assertAll(
                 () -> assertThat(users).containsKeys(IVAN.getId(), OLGA.getId()),
                 () -> assertThat(users).containsValues(IVAN, OLGA)
+        );
+    }
+
+    @Test
+    void throwExceptionIfUsernameOrPasswordIsNull() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> userService.login(null, "dummy"),
+                        "login() should throw exception on null username"),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> userService.login("dummy", null),
+                        "login() should throw exception on null password")
         );
     }
 
