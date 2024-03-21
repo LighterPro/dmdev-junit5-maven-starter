@@ -9,14 +9,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import ru.lighterpro.junit.dto.User;
 import ru.lighterpro.junit.extension.UserServiceParamResolver;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.RepeatedTest.LONG_DISPLAY_NAME;
 
 // Для примера можно сделать один на КЛАСС
 // @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -62,7 +65,8 @@ public class UserServiceTest {
         assertThat(users).hasSize(2);
     }
 
-    @Test
+    @RepeatedTest(value = 5, name = LONG_DISPLAY_NAME)
+    @DisplayName("Transformation list of users into a Map<userId, User>>")
     void usersListConvertedToMapById() {
         userService.add(IVAN, OLGA);
 
@@ -128,6 +132,18 @@ public class UserServiceTest {
             userService.add(IVAN, OLGA);
             Optional<User> maybeUser = userService.login(username, password);
             assertThat(maybeUser).isNotEmpty();
+        }
+
+        @Test
+        void checkLoginFunctionalityPerformance() {
+            assertTimeout(
+                    Duration.of(200L, ChronoUnit.MILLIS),
+                    () -> {
+//                        TimeUnit.MILLISECONDS.sleep(300); // не пройдет
+                        TimeUnit.MILLISECONDS.sleep(100); // пройдет
+                        return userService.login(IVAN.getUsername(), IVAN.getPassword());
+                    }
+            );
         }
     }
 
