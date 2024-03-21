@@ -1,7 +1,9 @@
 package ru.lighterpro.junit.service;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lighterpro.junit.dto.User;
+import ru.lighterpro.junit.extension.UserServiceParamResolver;
 
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Tag("user")
 //@TestMethodOrder(MethodOrderer.MethodName.class)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
+@ExtendWith(
+        UserServiceParamResolver.class
+)
 public class UserServiceTest {
 
     private static final User IVAN = User.of(1, "Ivan", "123");
@@ -25,13 +30,18 @@ public class UserServiceTest {
 
     private UserService userService;
 
+    public UserServiceTest(TestInfo testInfo) {
+        System.out.println();
+    }
+
     @BeforeAll
     static void beforeAll() {
     }
 
     @BeforeEach
-    void setUp() {
-        userService = new UserService();
+    void setUp(UserService userService) {
+        System.out.println("Before each");
+        this.userService = userService;
     }
 
     // 🟩 Tests block start 🟩 //
