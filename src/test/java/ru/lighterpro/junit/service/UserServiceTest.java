@@ -13,6 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 // Для примера можно сделать один на КЛАСС
 // @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+@Tag("fast")
+@Tag("user")
 public class UserServiceTest {
 
     private static final User IVAN = User.of(1, "Ivan", "123");
@@ -48,6 +51,7 @@ public class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void loginSuccessIfUserExists() {
         userService.add(IVAN);
         Optional<User> maybeUser = userService.login(IVAN.getUsername(), IVAN.getPassword());
@@ -57,6 +61,7 @@ public class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void loginFailIfUsernameDoesNotExist() {
         userService.add(IVAN);
         Optional<User> maybeUser = userService.login("WrongUsername", IVAN.getPassword());
@@ -64,6 +69,7 @@ public class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void loginFailIfPasswordIncorrect() {
         userService.add(IVAN);
         Optional<User> maybeUser = userService.login(IVAN.getUsername(), "WrongPassword");
@@ -83,6 +89,7 @@ public class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void throwExceptionIfUsernameOrPasswordIsNull() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class,
