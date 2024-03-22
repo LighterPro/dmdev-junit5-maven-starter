@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import ru.lighterpro.junit.dao.UserDao;
 import ru.lighterpro.junit.dto.User;
@@ -39,7 +40,7 @@ public class UserServiceTest {
     private static final User IVAN = User.of(1, "Ivan", "123");
     private static final User OLGA = User.of(2, "Olga", "456");
 
-    private UserDao userDaoMock;
+    private UserDao userDaoSpy;
     private UserService userService;
 
     @BeforeAll
@@ -48,8 +49,8 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        this.userDaoMock = Mockito.mock(UserDao.class); // Вот тут создается mock- объект, котоый дальше мы используем как реальный
-        this.userService = new UserService(userDaoMock);
+        this.userDaoSpy = Mockito.spy(new UserDao()); // Вот тут создается mock- объект, котоый дальше мы используем как реальный
+        this.userService = new UserService(userDaoSpy);
     }
 
     // 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 Tests block start 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 //
@@ -57,27 +58,20 @@ public class UserServiceTest {
     @Test
     void shouldDeleteExistedUser() {
         userService.add(IVAN, OLGA);
-//        doReturn(true).when(userDaoMock).delete(IVAN.getId()); // Это stub !
-        doReturn(false).when(userDaoMock).delete(any());
-        doReturn(true).when(userDaoMock).delete(any());
-//        doReturn(false, false, false, true) //true, false, false, (true ...)
-//                .when(userDaoMock).delete(any());
+        doReturn(true).when(userDaoSpy).delete(any());
 
-        for (int i = 0; i < 6; i++) {
-            System.out.println(userService.delete(IVAN.getId()));
-        }
-
-        boolean deletedResult = userService.delete(2);
-//        boolean deletedResult = userService.delete(IVAN.getId());
+        boolean deletedResult = userService.delete(IVAN.getId());
         assertThat(deletedResult).isTrue();
+
+        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+        Mockito.verify(userDaoSpy).delete(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(IVAN.getId() + 33);
+
     }
 
     @Test
     @DisplayName("The user list should be empty if no users have been added")
     void usersListEmptyIfNoUsersAdded() throws IOException {
-        if (true) {
-            throw new RuntimeException();
-        }
         List<User> users = userService.getAll();
         assertThat(users).as("Users list should be empty")
                 .isEmpty();
