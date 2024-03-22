@@ -7,8 +7,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import ru.lighterpro.junit.dto.User;
+import ru.lighterpro.junit.extension.ConditionalExtension;
+import ru.lighterpro.junit.extension.GlobalExtension;
+import ru.lighterpro.junit.extension.ThrowableExtension;
 import ru.lighterpro.junit.extension.UserServiceParamResolver;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -28,7 +32,7 @@ import static org.junit.jupiter.api.RepeatedTest.LONG_DISPLAY_NAME;
 @Tag("user")
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @ExtendWith(
-        UserServiceParamResolver.class
+        {UserServiceParamResolver.class, GlobalExtension.class, ConditionalExtension.class, ThrowableExtension.class}
 )
 public class UserServiceTest {
 
@@ -50,7 +54,10 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("The user list should be empty if no users have been added")
-    void usersListEmptyIfNoUsersAdded() {
+    void usersListEmptyIfNoUsersAdded() throws IOException {
+        if (true) {
+            throw new RuntimeException();
+        }
         List<User> users = userService.getAll();
         assertThat(users).as("Users list should be empty")
                 .isEmpty();
