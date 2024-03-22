@@ -1,5 +1,6 @@
 package ru.lighterpro.junit.service;
 
+import ru.lighterpro.junit.dao.UserDao;
 import ru.lighterpro.junit.dto.User;
 
 import java.util.*;
@@ -10,6 +11,15 @@ import static java.util.function.Function.identity;
 public class UserService {
 
     private final List<User> users = new ArrayList<>();
+    private final UserDao userDao;
+
+    public UserService(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    public boolean delete(Integer userId) {
+        return userDao.delete(userId);
+    }
 
     public List<User> getAll() {
         return users;

@@ -6,11 +6,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
+import ru.lighterpro.junit.dao.UserDao;
 import ru.lighterpro.junit.dto.User;
-import ru.lighterpro.junit.extension.ConditionalExtension;
-import ru.lighterpro.junit.extension.GlobalExtension;
-import ru.lighterpro.junit.extension.ThrowableExtension;
-import ru.lighterpro.junit.extension.UserServiceParamResolver;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -24,6 +22,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.RepeatedTest.LONG_DISPLAY_NAME;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 // Для примера можно сделать один на КЛАСС
 // @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -32,13 +32,14 @@ import static org.junit.jupiter.api.RepeatedTest.LONG_DISPLAY_NAME;
 @Tag("user")
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @ExtendWith(
-        {UserServiceParamResolver.class, GlobalExtension.class, ConditionalExtension.class, ThrowableExtension.class}
+        {/*UserServiceParamResolver.class, GlobalExtension.class, ConditionalExtension.class, ThrowableExtension.class*/}
 )
 public class UserServiceTest {
 
     private static final User IVAN = User.of(1, "Ivan", "123");
     private static final User OLGA = User.of(2, "Olga", "456");
 
+    private UserDao userDaoMock;
     private UserService userService;
 
     @BeforeAll
@@ -46,11 +47,30 @@ public class UserServiceTest {
     }
 
     @BeforeEach
-    void setUp(UserService userService) {
-        this.userService = userService;
+    void setUp() {
+        this.userDaoMock = Mockito.mock(UserDao.class); // Вот тут создается mock- объект, котоый дальше мы используем как реальный
+        this.userService = new UserService(userDaoMock);
     }
 
-    // 🟩 Tests block start 🟩 //
+    // 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 Tests block start 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 //
+
+    @Test
+    void shouldDeleteExistedUser() {
+        userService.add(IVAN, OLGA);
+//        doReturn(true).when(userDaoMock).delete(IVAN.getId()); // Это stub !
+        doReturn(false).when(userDaoMock).delete(any());
+        doReturn(true).when(userDaoMock).delete(any());
+//        doReturn(false, false, false, true) //true, false, false, (true ...)
+//                .when(userDaoMock).delete(any());
+
+        for (int i = 0; i < 6; i++) {
+            System.out.println(userService.delete(IVAN.getId()));
+        }
+
+        boolean deletedResult = userService.delete(2);
+//        boolean deletedResult = userService.delete(IVAN.getId());
+        assertThat(deletedResult).isTrue();
+    }
 
     @Test
     @DisplayName("The user list should be empty if no users have been added")
@@ -163,7 +183,7 @@ public class UserServiceTest {
         );
     }
 
-    // 🟥 Tests block end 🟥 //
+    // 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥 Tests block end 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥 //
 
     @AfterEach
     void tearDown() {
