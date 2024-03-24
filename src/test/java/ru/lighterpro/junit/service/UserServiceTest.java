@@ -6,8 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.lighterpro.junit.dao.UserDao;
 import ru.lighterpro.junit.dto.User;
 
@@ -25,48 +25,51 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.RepeatedTest.LONG_DISPLAY_NAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-
-// Для примера можно сделать один на КЛАСС
-// @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+import static org.mockito.Mockito.doThrow;
 
 @Tag("fast")
 @Tag("user")
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @ExtendWith(
-        {/*UserServiceParamResolver.class, GlobalExtension.class, ConditionalExtension.class, ThrowableExtension.class*/}
+        {MockitoExtension.class
+         /*,UserServiceParamResolver.class, GlobalExtension.class,
+         ConditionalExtension.class, ThrowableExtension.class*/}
 )
 public class UserServiceTest {
 
     private static final User IVAN = User.of(1, "Ivan", "123");
     private static final User OLGA = User.of(2, "Olga", "456");
 
-    private UserDao userDaoSpy;
+    @Mock
+    private UserDao userDao;
+
+    @InjectMocks
     private UserService userService;
 
-    @BeforeAll
-    static void beforeAll() {
-    }
+    @Captor
+    ArgumentCaptor<Integer> captor;
+
+    // --------------------------------------------------------------------------------------- //
 
     @BeforeEach
     void setUp() {
-        this.userDaoSpy = Mockito.spy(new UserDao()); // Вот тут создается mock- объект, котоый дальше мы используем как реальный
-        this.userService = new UserService(userDaoSpy);
+//        doReturn(true).when(userDao).delete(any()); // Можно вот так общую логику для всех тестов выносить в @BeforeEach
     }
 
-    // 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 Tests block start 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 //
+    // --------------------------------------------------------------------------------------- //
+
+    @Test
+    void throwExceptionIfDatabaseIsNotAvailable() {
+        doThrow(RuntimeException.class).when(userDao).delete(any());
+        assertThrows(RuntimeException.class, () -> userService.delete(IVAN.getId()));
+    }
 
     @Test
     void shouldDeleteExistedUser() {
-        userService.add(IVAN, OLGA);
-        doReturn(true).when(userDaoSpy).delete(any());
+        assertThat(userService.delete(IVAN.getId())).isTrue();
 
-        boolean deletedResult = userService.delete(IVAN.getId());
-        assertThat(deletedResult).isTrue();
-
-        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
-        Mockito.verify(userDaoSpy).delete(captor.capture());
+        Mockito.verify(userDao).delete(captor.capture());
         assertThat(captor.getValue()).isEqualTo(IVAN.getId() + 33);
-
     }
 
     @Test
@@ -177,13 +180,4 @@ public class UserServiceTest {
         );
     }
 
-    // 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥 Tests block end 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥 //
-
-    @AfterEach
-    void tearDown() {
-    }
-
-    @AfterAll
-    static void afterAll() {
-    }
 }
