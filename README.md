@@ -1,4 +1,4 @@
-# junit5-trainer
+# dmdev-junit5-maven-starter
 
 Задание:
 - Покрыть Unit и Integration тестами 100% кода
