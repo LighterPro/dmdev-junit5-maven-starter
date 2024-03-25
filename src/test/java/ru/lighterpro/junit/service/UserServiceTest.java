@@ -53,7 +53,7 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-//        doReturn(true).when(userDao).delete(any()); // Можно вот так общую логику для всех тестов выносить в @BeforeEach
+        //        doReturn(true).when(userDao).delete(any()); // Можно вот так общую логику для всех тестов выносить в @BeforeEach
     }
 
     // --------------------------------------------------------------------------------------- //
@@ -66,6 +66,7 @@ public class UserServiceTest {
 
     @Test
     void shouldDeleteExistedUser() {
+        doReturn(true).when(userDao).delete(any());
         assertThat(userService.delete(IVAN.getId())).isTrue();
 
         Mockito.verify(userDao).delete(captor.capture());
